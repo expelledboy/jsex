@@ -2,14 +2,18 @@
 
 Duplex remote calls between Elixir and Node.JS over Port.
 
-The wrapper uses stdio to communicate to erlang, so avoid `console.log(...)`.
+The wrapper uses stdio to communicate to erlang, so *dont* use `console.log(..)`.
 
 ## Getting Started
+
+### Nodelet Interface
 
 example.js
 ```js
 const server = require('nodelet');
 const bus = require('./message_bus.js');
+
+const bus_port = 1234;
 
 // an example of request handler
 server.send_msg = (text) => {
@@ -17,6 +21,7 @@ server.send_msg = (text) => {
 }
 
 bus.on('connect', () => {
+  server.info('bus connected', { bus_port });
   // REQUIRED: init the elixir Nodelet
   server.ready();
 });
@@ -26,12 +31,20 @@ bus.on('data', (text) => {
   await server.request('recv_msg', text);
 });
 
+bus.on('error', () => {
+  server.error('bus error');
+  server.close();
+});
+
 server.on('end', () => {
   // hook into graceful shutdown
   bus.close();
 });
 
-bus.connect({ port: 1234 });
+server.debug('this will print to stderr');
+// disabled during production
+
+bus.connect({ port: bus_port });
 ```
 
 example.ex
@@ -41,6 +54,9 @@ defmodule Nodelet.Example do
   alias Jsex.Nodelet
 
   @name :example
+
+  # create atoms used in logging meta from nodelet
+  @meta [:bus_port]
 
   def start_link() do
     opts = %{ application: MyProject, module: "example.js", handler: __MODULE__ }
@@ -76,6 +92,6 @@ end
 ## TODO
 
 - [ ] Figure out how to open fd 3 and 4 in node to allow stdio for debugging
-- [ ] Write a `gen_server.js` alternative to `nodelet.js`
 - [ ] Test async requests in both directions with no conflicts
 - [ ] Ensure graceful shutdown in all failure cases
+- [ ] Write a `gen_server.js` alternative to `nodelet.js`

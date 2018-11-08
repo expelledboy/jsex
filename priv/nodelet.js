@@ -64,14 +64,38 @@ async function recieve(ref) {
 
 function ready() {
   this.emit('ready');
-  readLineInterface.on('line', handle)
+  readLineInterface.on('line', handle);
   // XXX this is the only message that does not conform to the stdio message protocol
   console.log('init');
+}
+
+function log(type) {
+  return (msg, meta = {}) => {
+    if (!meta instanceof Object) throw new Error(`invalid meta used for logging`);
+    const output = JSON.stringify([type, msg, meta]);
+    console.log(output);
+  };
+}
+
+function debug(msg) {
+  // XXX follow Logger standards
+  const datetime = new Date().toISOString();
+  const time = datetime.split(new RegExp('T|Z'))[1];
+  console.error();
+  console.error(time, '[debug]', msg);
 }
 
 Object.assign(server, {
   request,
   ready,
+  debug,
+  info: log('info'),
+  warn: log('warn'),
+  error: log('error'),
+});
+
+if (process.env['MIX_ENV'] == 'prod') Object.assign(server, {
+  debug: () => {},
 });
 
 module.exports = server;

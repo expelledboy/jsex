@@ -158,6 +158,15 @@ defmodule Jsex.Nodelet do
     end
   end
 
+  defp handle_data(log, [msg, meta], st) when log in ["info", "warn", "error"] do
+    Logger.log(
+      String.to_existing_atom(log),
+      msg,
+      to_keyword_list(meta)
+    )
+    {:noreply, st}
+  end
+
   defp open_request(ref, from, st) do
     timer_ref = Process.send_after(self(), {:timeout, ref}, 3000)
     Map.update!(st, :requests, &Map.put(&1, ref, {timer_ref, from}))
@@ -180,5 +189,10 @@ defmodule Jsex.Nodelet do
 
   defp buffer({:eol, partial}, st) do
     {:data, partial <> st.buffer, %{st | buffer: ""}}
+  end
+
+  defp to_keyword_list(dict) do
+    # XXX rather safe than sorry
+    Enum.map(dict, fn({key, value}) -> {String.to_existing_atom(key), value} end)
   end
 end
