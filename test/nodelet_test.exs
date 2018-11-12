@@ -8,14 +8,14 @@ defmodule Jsex.Nodelet.Test do
 
   test "make request to stateful node process" do
     {:ok, nodelet} = Nodelet.start_link(@opts)
-    assert {:ok, [1]} = Nodelet.request(nodelet, "count")
+    assert {:ok, [1]} = Nodelet.call(nodelet, "count")
   end
 
   test "node process can send requests" do
     {:ok, nodelet} = Nodelet.start_link(@opts)
 
     with_mock @handler, [:non_strict], state_equal: fn st -> st end do
-      {:ok, [true]} = Nodelet.request(nodelet, "do_request")
+      {:ok, [true]} = Nodelet.call(nodelet, "do_call")
       assert :ok = :meck.wait(1, @handler, :state_equal, 1, 1000)
       assert_called(@handler.state_equal(0))
     end

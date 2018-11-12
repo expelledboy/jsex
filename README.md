@@ -28,7 +28,7 @@ bus.on('connect', () => {
 
 bus.on('data', (text) => {
   // make a request back to elixir handler
-  await server.request('recv_msg', text);
+  await server.call('recv_msg', text);
 });
 
 bus.on('error', () => {
@@ -66,7 +66,7 @@ defmodule Nodelet.Example do
   def send_msg(text) do
     Logger.info "send msg #{text}"
     # call the node request handler 'send_msg'
-    Nodelet.request(@name, "send_msg", text)
+    Nodelet.call(@name, "send_msg", text)
   end
 
   # handler for the request which orginated from node

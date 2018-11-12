@@ -2,8 +2,8 @@ defmodule Jsex.Nodelet do
   use GenServer
   require Logger
 
-  def request(nodelet, action, args \\ []) do
-    GenServer.call(nodelet, {:request, action, args})
+  def call(nodelet, action, args \\ []) do
+    GenServer.call(nodelet, {:call, action, args})
   end
 
   def start_link(opts, link_opts \\ []) do
@@ -114,7 +114,7 @@ defmodule Jsex.Nodelet do
     end
   end
 
-  def handle_call({:request, action, args}, from, st) do
+  def handle_call({:call, action, args}, from, st) do
     ref = make_ref() |> :erlang.ref_to_list() |> to_string
     data = Jason.encode!(["request", ref, action] ++ args)
     Logger.debug("sending request", reference: ref)

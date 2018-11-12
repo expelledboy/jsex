@@ -22,6 +22,7 @@ const handler = {
   request: (args) => {
     const [ref, action, ...params] = args;
     // if this errors should crash the nodelet
+    if (!server[action]) throw new Error(`undefined function ${action}`);
     const response = server[action](...params);
     const output = JSON.stringify(['response', ref, response]);
     console.log(output);
@@ -45,7 +46,7 @@ async function handle(input) {
   handler[packet](args);
 }
 
-async function request(action, ...args) {
+async function call(action, ...args) {
   const ref = Math.random() * 10000000000000000000;
   const output = JSON.stringify(['request', ref, action, ...args]);
   console.log(output);
@@ -86,7 +87,7 @@ function debug(msg) {
 }
 
 Object.assign(server, {
-  request,
+  call,
   ready,
   debug,
   info: log('info'),

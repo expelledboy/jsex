@@ -18,11 +18,11 @@ server.count = () => {
   return state += 1;
 }
 
-server.do_request = () => {
+server.do_call = () => {
   setTimeout(async () => {
     // call from node to server
     server.debug('doing async request to elixir code');
-    const response = await server.request('state_equal', state);
+    const response = await server.call('state_equal', state);
     if (response != state) throw new Error('states not equal');
   }, 20);
   return true;
