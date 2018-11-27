@@ -6,6 +6,10 @@ defmodule Jsex.Nodelet do
     GenServer.call(nodelet, {:call, action, args})
   end
 
+  def online(nodelet) do
+    GenServer.call(nodelet, :online)
+  end
+
   def start_link(opts, link_opts \\ []) do
     GenServer.start_link(__MODULE__, opts, link_opts)
   end
@@ -35,22 +39,25 @@ defmodule Jsex.Nodelet do
         ]
       ])
 
+    {:ok, status} = wait_init(port, 3000)
+
     state = %{
       handler: opts[:handler],
       port: port,
       buffer: "",
-      requests: %{}
+      requests: %{},
+      online: status,
     }
 
-    :ok = wait_init(port, 3000)
     Logger.debug("nodelet ready")
     {:ok, state}
   end
 
   defp wait_init(port, timeout) do
     receive do
-      {^port, {:data, {:eol, "init"}}} ->
-        :ok
+      {^port, {:data, {:eol, packet}}} ->
+        ["init", ready] = Jason.decode!(packet)
+        {:ok, ready}
 
       {^port, {:exit_status, status}} ->
         throw({:exit, status})
@@ -114,10 +121,14 @@ defmodule Jsex.Nodelet do
     end
   end
 
+  def handle_call(:online, _from, st) do
+    {:reply, st.online, st}
+  end
+
   def handle_call({:call, action, args}, from, st) do
     ref = make_ref() |> :erlang.ref_to_list() |> to_string
     data = Jason.encode!(["request", ref, action] ++ args)
-    Logger.debug("sending request", reference: ref)
+    Logger.debug("sending request #{action}", reference: ref)
 
     case Port.command(st.port, "#{data}\n") do
       true ->
@@ -128,10 +139,26 @@ defmodule Jsex.Nodelet do
     end
   end
 
+  defp handle_data("request", [ref, status], st) when status in ["online", "offline"] do
+    Logger.info "nodelet going #{status}"
+    status = status == "online"
+    if function_exported?(st.handler, :online, 1), do: apply(st.handler, :online, status)
+
+    data = Jason.encode!(["response", ref, true])
+    case Port.command(st.port, "#{data}\n") do
+      true ->
+        {:noreply, %{ st | online: status }}
+
+      false ->
+        {:stop, :port_closed, st}
+    end
+  end
+
   defp handle_data("request", [ref, action | args], st) do
     Logger.debug("got request", reference: ref)
     if is_nil(st.handler), do: throw(:handler_undefined)
     function_name = String.to_existing_atom(action)
+    # TODO better error
     response = apply(st.handler, function_name, args)
     data = Jason.encode!(["response", ref, response])
     Logger.debug("sending response", reference: ref)

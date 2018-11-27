@@ -11,6 +11,17 @@ defmodule Jsex.Nodelet.Test do
     assert {:ok, [1]} = Nodelet.call(nodelet, "count")
   end
 
+  test "nodelet started by default online, which can be flagged" do
+    {:ok, nodelet} = Nodelet.start_link(@opts)
+    assert Nodelet.online(nodelet)
+    {:ok, [true]} = Nodelet.call(nodelet, "do_offline")
+    Process.sleep(10)
+    assert not Nodelet.online(nodelet)
+    {:ok, [true]} = Nodelet.call(nodelet, "do_online")
+    Process.sleep(10)
+    assert Nodelet.online(nodelet)
+  end
+
   test "node process can send requests" do
     {:ok, nodelet} = Nodelet.start_link(@opts)
 

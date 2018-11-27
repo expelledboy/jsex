@@ -17,6 +17,11 @@ const readLineInterface = readline.createInterface({
   terminal: false,
 })
 
+function send(data) {
+  const output = JSON.stringify(data);
+  console.log(output);
+}
+
 const handler = {
 
   request: (args) => {
@@ -24,13 +29,13 @@ const handler = {
     // if this errors should crash the nodelet
     if (!server[action]) throw new Error(`undefined function ${action}`);
     const response = server[action](...params);
-    const output = JSON.stringify(['response', ref, response]);
-    console.log(output);
+    send(['response', ref, response]);
   },
 
   response: (args) => {
     const [ref, ...params] = args;
     requests[ref](...params);
+    delete requests[ref];
   },
 
   terminate: () => {
@@ -48,9 +53,18 @@ async function handle(input) {
 
 async function call(action, ...args) {
   const ref = Math.random() * 10000000000000000000;
-  const output = JSON.stringify(['request', ref, action, ...args]);
-  console.log(output);
+  send(['request', ref, action, ...args]);
   return await recieve(ref);
+}
+
+function online() {
+  this.emit('online');
+  call('online');
+}
+
+function offline() {
+  this.emit('offline');
+  call('offline');
 }
 
 async function recieve(ref) {
@@ -63,18 +77,17 @@ async function recieve(ref) {
   });
 }
 
-function ready() {
-  this.emit('ready');
+function init(ready = true) {
+  this.emit('init');
   readLineInterface.on('line', handle);
-  // XXX this is the only message that does not conform to the stdio message protocol
-  console.log('init');
+  send(['init', ready]);
+  this.emit(ready ? 'online' : 'offline');
 }
 
 function log(type) {
   return (msg, meta = {}) => {
     if (!meta instanceof Object) throw new Error(`invalid meta used for logging`);
-    const output = JSON.stringify([type, msg, meta]);
-    console.log(output);
+    send([type, msg, meta]);
   };
 }
 
@@ -82,13 +95,14 @@ function debug(msg) {
   // XXX follow Logger standards
   const datetime = new Date().toISOString();
   const time = datetime.split(new RegExp('T|Z'))[1];
-  console.error();
   console.error(time, '[debug]', msg);
 }
 
 Object.assign(server, {
   call,
-  ready,
+  online,
+  offline,
+  init,
   debug,
   info: log('info'),
   warn: log('warn'),

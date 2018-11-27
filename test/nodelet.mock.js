@@ -9,7 +9,7 @@ let state;
 
 setTimeout(() => {
   state = 0;
-  server.ready();
+  server.init();
 }, 20);
 
 // api which we can call from erlang
@@ -25,6 +25,16 @@ server.do_call = () => {
     const response = await server.call('state_equal', state);
     if (response != state) throw new Error('states not equal');
   }, 20);
+  return true;
+}
+
+server.do_online = () => {
+  server.online();
+  return true;
+}
+
+server.do_offline = () => {
+  server.offline();
   return true;
 }
 
