@@ -1,0 +1,4 @@
+{
+  "name": "nodelet",
+  "main": "priv/nodelet.js"
+}

@@ -1,4 +1,4 @@
-# Jsex
+# Nodelet
 
 Duplex remote calls between Elixir and Node.JS over Port.
 
@@ -51,7 +51,6 @@ example.ex
 ```elixir
 defmodule Nodelet.Example do
   require Logger
-  alias Jsex.Nodelet
 
   @name :example
 

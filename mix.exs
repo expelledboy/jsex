@@ -1,11 +1,11 @@
-defmodule Jsex.MixProject do
+defmodule Nodelet.MixProject do
   use Mix.Project
 
   @description "Duplex remote calls between Elixir and Node.JS over Port"
 
   def project do
     [
-      app: :jsex,
+      app: :nodelet,
       version: "0.1.0",
       elixir: "~> 1.7",
       description: @description,
@@ -32,7 +32,7 @@ defmodule Jsex.MixProject do
     [
       licenses: ["Apache 2.0"],
       maintainers: ["expelledboy"],
-      links: %{"GitHub" => "https://github.com/expelledboy/jsex"}
+      links: %{"GitHub" => "https://github.com/expelledboy/nodelet"}
     ]
   end
 end

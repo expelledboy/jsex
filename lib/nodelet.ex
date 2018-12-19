@@ -1,4 +1,4 @@
-defmodule Jsex.Nodelet do
+defmodule Nodelet do
   use GenServer
   require Logger
 
@@ -22,7 +22,7 @@ defmodule Jsex.Nodelet do
     app = opts[:application]
     module_path = if(app, do: :code.priv_dir(app), else: opts.module_path)
     nodelet = Path.join(module_path, module)
-    path = Enum.join([module_path, :code.priv_dir(:jsex)], ":")
+    path = Enum.join([module_path, :code.priv_dir(:nodelet)], ":")
 
     port =
       Port.open({:spawn_executable, node}, [

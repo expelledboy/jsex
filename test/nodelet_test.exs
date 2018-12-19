@@ -1,7 +1,6 @@
-defmodule Jsex.Nodelet.Test do
+defmodule Nodelet.Test do
   use ExUnit.Case, async: false
   import Mock
-  alias Jsex.Nodelet
 
   @handler Handler
   @opts %{module_path: File.cwd!() <> "/test", module: "nodelet.mock.js", handler: @handler}
